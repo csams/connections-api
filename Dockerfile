@@ -20,9 +20,7 @@ RUN go mod download
 
 # Copy the go source
 COPY cmd/main.go cmd/main.go
-COPY api/ api/
 COPY internal/ internal/
-COPY pkg/ pkg/
 
 # Build strips out debug info to minimize binary size
 RUN CGO_ENABLED=${CGO_ENABLED} GOOS=linux GOARCH=${TARGETARCH} go build -a -ldflags="-s -w" -tags strictfipsruntime -o manager cmd/main.go

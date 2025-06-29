@@ -27,19 +27,11 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
-
-	servingschema "github.com/kserve/kserve/pkg/client/clientset/versioned/scheme"
-	nbv1 "github.com/kubeflow/kubeflow/components/notebook-controller/api/v1"
-	nbv1beta1 "github.com/kubeflow/kubeflow/components/notebook-controller/api/v1beta1"
-
-	// this requires go 1.24
-	// modelservice "github.com/llm-d/llm-d-model-service/api/v1alpha1"
 
 	connections "github.com/csams/connections-api/internal/webhook"
 )
@@ -50,11 +42,7 @@ var (
 )
 
 func init() {
-	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(servingschema.AddToScheme(scheme))
-	// utilruntime.Must(modelservice.AddToScheme(scheme))
-	utilruntime.Must(nbv1.AddToScheme(scheme))
-	utilruntime.Must(nbv1beta1.AddToScheme(scheme))
+	utilruntime.Must(connections.AddToScheme(scheme))
 }
 
 func main() {
@@ -113,7 +101,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	hook := connections.NewConnectionBindingWebhook(scheme)
+	hook := connections.NewDispatcher(scheme)
 	mgr.GetWebhookServer().Register("/bind-connections-to-workloads", hook)
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
