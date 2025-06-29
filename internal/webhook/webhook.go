@@ -11,21 +11,23 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
+	"github.com/csams/connections-api/internal/registry"
 )
 
 type Dispatcher struct {
-	Scheme   *runtime.Scheme
-	Decoder  admission.Decoder
-	Registry ConnectionBinderRegistry
+	Scheme         *runtime.Scheme
+	Decoder        admission.Decoder
+	DefaulterHooks *registry.DefaulterHookRegistry
 }
 
 // NewDispatcher creates an admission.Webhook that decodes each request to a PartialObjectMetadata and then
 // dispatches it to an admission.Webhook wrapping a type-specific admission.CustomDefaulter
-func NewDispatcher(scheme *runtime.Scheme) *admission.Webhook {
+func NewDispatcher(scheme *runtime.Scheme, hooks *registry.DefaulterHookRegistry) *admission.Webhook {
 	dispatcher := &Dispatcher{
-		Scheme:   scheme,
-		Decoder:  admission.NewDecoder(scheme),
-		Registry: NewConnectionBinderRegistry(scheme),
+		Scheme:         scheme,
+		Decoder:        admission.NewDecoder(scheme),
+		DefaulterHooks: hooks,
 	}
 
 	return (&admission.Webhook{
@@ -56,9 +58,9 @@ func (dispatcher *Dispatcher) Handle(ctx context.Context, req admission.Request)
 
 	// get the object's gvk and dispatch to the right webhook
 	if gvk, err := apiutil.GVKForObject(pm, dispatcher.Scheme); err == nil {
-		if binder, ok := dispatcher.Registry[gvk]; ok {
+		if defaulter, ok := dispatcher.DefaulterHooks.Lookup(gvk); ok {
 			logger.Info(fmt.Sprintf("Processing: %v", gvk))
-			return binder.Handle(ctx, req)
+			return defaulter.Handle(ctx, req)
 		} else {
 			logger.Info(fmt.Sprintf("Skipping: %v", gvk))
 		}

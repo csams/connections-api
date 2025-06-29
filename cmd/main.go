@@ -25,6 +25,8 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -33,7 +35,13 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	connections "github.com/csams/connections-api/internal/webhook"
+	"github.com/csams/connections-api/internal/registry"
+	cxnhook "github.com/csams/connections-api/internal/webhook"
+
+	defaulters "github.com/csams/connections-api/internal/defaulters/api"
+	"github.com/csams/connections-api/internal/defaulters/deployment"
+	"github.com/csams/connections-api/internal/defaulters/inferenceservice"
+	"github.com/csams/connections-api/internal/defaulters/notebooks"
 )
 
 var (
@@ -42,7 +50,9 @@ var (
 )
 
 func init() {
-	utilruntime.Must(connections.AddToScheme(scheme))
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(inferenceservice.AddToScheme(scheme))
+	utilruntime.Must(notebooks.AddToScheme(scheme))
 }
 
 func main() {
@@ -101,7 +111,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	hook := connections.NewDispatcher(scheme)
+	defaulterHooks := registry.New(scheme)
+
+	defaulterHooks.Add(defaulters.New(deployment.New()))
+	defaulterHooks.Add(defaulters.New(inferenceservice.New()))
+	defaulterHooks.Add(defaulters.New(notebooks.NewV1Binder()))
+	defaulterHooks.Add(defaulters.New(notebooks.NewV1Beta1Binder()))
+
+	hook := cxnhook.NewDispatcher(scheme, defaulterHooks)
 	mgr.GetWebhookServer().Register("/bind-connections-to-workloads", hook)
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
