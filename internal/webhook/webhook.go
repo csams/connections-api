@@ -9,22 +9,22 @@ import (
 	// InferenceService
 	serving "github.com/kserve/kserve/pkg/apis/serving/v1beta1"
 
-	nbv1 "github.com/kubeflow/kubeflow/components/notebook-controller/api/v1"
-	nbv1beta1 "github.com/kubeflow/kubeflow/components/notebook-controller/api/v1beta1"
-
 	// https://deepwiki.com/llm-d/llm-d-deployer/3-modelservice-crd
 	// requires go 1.24 and I don't feel like making a fork to try to downgrade it right now
 	//modelservice "github.com/llm-d/llm-d-model-service/api/v1alpha1"
 
 	// for notebooks https://github.com/kubeflow/kubeflow/blob/master/components/admission-webhook/README.md
 	// kubeflow has a PodDefaults CR, but it doesn't look like it's been updated in 3 years.
+	nbv1 "github.com/kubeflow/kubeflow/components/notebook-controller/api/v1"
+	nbv1beta1 "github.com/kubeflow/kubeflow/components/notebook-controller/api/v1beta1"
 
 	// https://docs.google.com/document/d/11ZQJ2VhTc42S9K4yau2dMs3Q3f4jqWJL_7Sq14C3hzY/edit?tab=t.0
 	// "Reuse storage-initializer for model loading and authentication from a specified URI (e.g., from Hugging Face)."
 	// LLMInferenceService
 
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -93,13 +93,13 @@ func makeDispatcher(scheme *runtime.Scheme, decoder admission.Decoder, binders m
 		// the workload either must have a label with an alternate identity we can use to match against a binding object
 		// or it must have annotations that specify the connections that apply
 
-		u := &unstructured.Unstructured{}
-		if err := decoder.Decode(req, u); err != nil {
+		pm := &metav1.PartialObjectMetadata{}
+		if err := decoder.Decode(req, pm); err != nil {
 			logger.Error(err, "Error decoding request")
 			return admission.Errored(http.StatusBadRequest, err)
 		}
 
-		if gvk, err := apiutil.GVKForObject(u, scheme); err != nil {
+		if gvk, err := apiutil.GVKForObject(pm, scheme); err != nil {
 			logger.Error(err, "Error getting gvk")
 			return admission.Errored(http.StatusBadRequest, err)
 		} else {
