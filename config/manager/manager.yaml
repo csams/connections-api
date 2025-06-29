@@ -61,9 +61,9 @@ spec:
       - command:
         - /manager
         args:
-          - --leader-elect
           - --health-probe-bind-address=:8081
-        image: controller:latest
+        image: localhost/connection-controller:latest
+        imagePullPolicy: Never
         name: manager
         securityContext:
           allowPrivilegeEscalation: false

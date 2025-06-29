@@ -34,9 +34,14 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	servingkserveiov1beta1 "github.com/csams/connections-api/api/v1beta1"
-	"github.com/csams/connections-api/internal/controller"
-	//+kubebuilder:scaffold:imports
+	servingschema "github.com/kserve/kserve/pkg/client/clientset/versioned/scheme"
+	nbv1 "github.com/kubeflow/kubeflow/components/notebook-controller/api/v1"
+	nbv1beta1 "github.com/kubeflow/kubeflow/components/notebook-controller/api/v1beta1"
+
+	// this requires go 1.24
+	// modelservice "github.com/llm-d/llm-d-model-service/api/v1alpha1"
+
+	connections "github.com/csams/connections-api/internal/webhook"
 )
 
 var (
@@ -46,23 +51,20 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-
-	utilruntime.Must(servingkserveiov1beta1.AddToScheme(scheme))
-	//+kubebuilder:scaffold:scheme
+	utilruntime.Must(servingschema.AddToScheme(scheme))
+	// utilruntime.Must(modelservice.AddToScheme(scheme))
+	utilruntime.Must(nbv1.AddToScheme(scheme))
+	utilruntime.Must(nbv1beta1.AddToScheme(scheme))
 }
 
 func main() {
 	var metricsAddr string
-	var enableLeaderElection bool
 	var probeAddr string
 	var secureMetrics bool
 	var enableHTTP2 bool
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metric endpoint binds to. "+
 		"Use the port :8080. If not set, it will be '0 in order to disable the metrics server")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
 	flag.BoolVar(&secureMetrics, "metrics-secure", false,
 		"If set the metrics endpoint is served securely")
 	flag.BoolVar(&enableHTTP2, "enable-http2", false,
@@ -104,39 +106,15 @@ func main() {
 		},
 		WebhookServer:          webhookServer,
 		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "b5dbe4e0.opendatahub.io",
-		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
-		// when the Manager ends. This requires the binary to immediately end when the
-		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
-		// speeds up voluntary leader transitions as the new leader don't have to wait
-		// LeaseDuration time first.
-		//
-		// In the default scaffold provided, the program ends immediately after
-		// the manager stops, so would be fine to enable this option. However,
-		// if you are doing or is intended to do any operation such as perform cleanups
-		// after the manager stops then its usage might be unsafe.
-		// LeaderElectionReleaseOnCancel: true,
+		LeaderElection:         false,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
-	if err = (&controller.InferenceServiceReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "InferenceService")
-		os.Exit(1)
-	}
-	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		if err = (&servingkserveiov1beta1.InferenceService{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "InferenceService")
-			os.Exit(1)
-		}
-	}
-	//+kubebuilder:scaffold:builder
+	hook := connections.NewConnectionBindingWebhook(scheme)
+	mgr.GetWebhookServer().Register("/bind-connections-to-workloads", hook)
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")

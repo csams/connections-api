@@ -1,5 +1,6 @@
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+IMG ?= connection-controller:latest
+KIND_CLUSTER ?= webhook-testing
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.29.0
 
@@ -14,7 +15,7 @@ endif
 # Be aware that the target commands are only tested with Docker which is
 # scaffolded by default. However, you might want to replace it to use other
 # tools. (i.e. podman)
-CONTAINER_TOOL ?= docker
+CONTAINER_TOOL ?= podman
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
@@ -92,6 +93,11 @@ run: manifests generate fmt vet ## Run a controller from your host.
 .PHONY: docker-build
 docker-build: ## Build docker image with the manager.
 	$(CONTAINER_TOOL) build -t ${IMG} .
+
+.PHONY: load-kind
+load-kind: ## load the controller image into kind
+	$(CONTAINER_TOOL) save > image.tar ${IMG}
+	kind load image-archive image.tar -n webhook-testing
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
