@@ -50,4 +50,5 @@ Back in the original terminal:
 2025-06-30T01:10:38Z	INFO	controller-runtime.webhook	Serving webhook server	{"host": "", "port": 9443}
 2025-06-30T01:10:38Z	INFO	controller-runtime.certwatcher	Starting certificate poll+watcher	{"interval": "10s"}
 2025-06-30T01:11:03Z	INFO	admission	Processing: apps/v1, Kind=Deployment	{"object": {"name":"my-dep","namespace":"default"}, "namespace": "default", "name": "my-dep", "resource": {"group":"apps","version":"v1","resource":"deployments"}, "user": "kubernetes-admin", "requestID": "9fbde638-6736-49b5-9f70-c2e7eca27488"}
-2025-06-30T01:11:03Z	INFO	admission	Handling request of type *v1.Deployment from kubernetes-admin	{"object": {"name":"my-dep","namespace":"default"}, "namespace": "default", "name": "my-dep", "resource": {"group":"apps","version":"v1","resource":"deployments"}, "user": "kubernetes-admin", "requestID": "9fbde638-6736-49b5-9f70-c2e7eca27488"}```
+2025-06-30T01:11:03Z	INFO	admission	Handling request of type *v1.Deployment from kubernetes-admin	{"object": {"name":"my-dep","namespace":"default"}, "namespace": "default", "name": "my-dep", "resource": {"group":"apps","version":"v1","resource":"deployments"}, "user": "kubernetes-admin", "requestID": "9fbde638-6736-49b5-9f70-c2e7eca27488"}
+```
