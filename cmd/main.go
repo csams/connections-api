@@ -35,13 +35,12 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	"github.com/csams/connections-api/internal/registry"
-	cxnhook "github.com/csams/connections-api/internal/webhook"
-
 	"github.com/csams/connections-api/internal/binders/deployment"
 	"github.com/csams/connections-api/internal/binders/inferenceservice"
 	"github.com/csams/connections-api/internal/binders/notebooks"
 	"github.com/csams/connections-api/internal/defaulter"
+	"github.com/csams/connections-api/internal/dispatcher"
+	"github.com/csams/connections-api/internal/registry"
 )
 
 var (
@@ -115,10 +114,10 @@ func main() {
 
 	defaulterHooks.Add(defaulter.New(deployment.New()))
 	defaulterHooks.Add(defaulter.New(inferenceservice.New()))
-	defaulterHooks.Add(defaulter.New(notebooks.NewV1Binder()))
-	defaulterHooks.Add(defaulter.New(notebooks.NewV1Beta1Binder()))
+	defaulterHooks.Add(defaulter.New(notebooks.NewV1()))
+	defaulterHooks.Add(defaulter.New(notebooks.NewV1Beta1()))
 
-	hook := cxnhook.NewDispatcher(scheme, defaulterHooks)
+	hook := dispatcher.New(scheme, defaulterHooks)
 	mgr.GetWebhookServer().Register("/bind-connections-to-workloads", hook)
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

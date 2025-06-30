@@ -39,7 +39,7 @@ func (dep *NotebookV1Binder) Mutate(ctx context.Context, obj *nbv1.Notebook) err
 	return nil
 }
 
-func NewV1Binder() *NotebookV1Binder {
+func NewV1() *NotebookV1Binder {
 	return &NotebookV1Binder{}
 }
 
@@ -54,6 +54,6 @@ func (dep *NotebookV1Beta1Binder) Mutate(ctx context.Context, obj *nbv1beta1.Not
 	return nil
 }
 
-func NewV1Beta1Binder() *NotebookV1Beta1Binder {
+func NewV1Beta1() *NotebookV1Beta1Binder {
 	return &NotebookV1Beta1Binder{}
 }

@@ -1,4 +1,4 @@
-package webhook
+package dispatcher
 
 import (
 	"context"
@@ -21,18 +21,16 @@ type Dispatcher struct {
 	DefaulterHooks *registry.DefaulterHookRegistry
 }
 
-// NewDispatcher creates an admission.Webhook that decodes each request to a PartialObjectMetadata and then
+// New creates an admission.Webhook that decodes each request to a PartialObjectMetadata and then
 // dispatches it to an admission.Webhook wrapping a type-specific admission.CustomDefaulter
-func NewDispatcher(scheme *runtime.Scheme, hooks *registry.DefaulterHookRegistry) *admission.Webhook {
-	dispatcher := &Dispatcher{
-		Scheme:         scheme,
-		Decoder:        admission.NewDecoder(scheme),
-		DefaulterHooks: hooks,
+func New(scheme *runtime.Scheme, hooks *registry.DefaulterHookRegistry) *admission.Webhook {
+	return &admission.Webhook{
+		Handler: &Dispatcher{
+			Scheme:         scheme,
+			Decoder:        admission.NewDecoder(scheme),
+			DefaulterHooks: hooks,
+		},
 	}
-
-	return (&admission.Webhook{
-		Handler: dispatcher,
-	})
 }
 
 func (dispatcher *Dispatcher) Handle(ctx context.Context, req admission.Request) admission.Response {
