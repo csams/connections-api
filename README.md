@@ -2,6 +2,9 @@
 
 This is a test bed for exploring design ideas for OpenDataHub Connections API.
 
+There's not much here yet. I'm playing with an idea for handling multiple types with one hook in a type safe
+way that's easy to extend.
+
 ## Setup
 I'm testing with kind.
 ```fish
