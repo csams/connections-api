@@ -97,7 +97,7 @@ docker-build: ## Build docker image with the manager.
 .PHONY: load-kind
 load-kind: ## load the controller image into kind
 	$(CONTAINER_TOOL) save > image.tar ${IMG}
-	kind load image-archive image.tar -n webhook-testing
+	kind load image-archive image.tar -n ${KIND_CLUSTER}
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.

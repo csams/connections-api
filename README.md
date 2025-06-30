@@ -1,114 +1,50 @@
-# connections-api
-// TODO(user): Add simple overview of use/purpose
+# Connections API Design Exploration
 
-## Description
-// TODO(user): An in-depth paragraph about your project and overview of use
+This is a test bed for exploring design ideas for OpenDataHub Connections API.
 
-## Getting Started
+## Setup
+I'm testing with kind.
+```fish
+❯ kind version
+kind v0.27.0 go1.23.6 linux/amd64
 
-### Prerequisites
-- go version v1.21.0+
-- docker version 17.03+.
-- kubectl version v1.11.3+.
-- Access to a Kubernetes v1.11.3+ cluster.
+❯ kind create cluster --name=webhook-testing
+# output elided
 
-### To Deploy on the cluster
-**Build and push your image to the location specified by `IMG`:**
+❯ kind get clusters
+enabling experimental podman provider
+webhook-testing
 
-```sh
-make docker-build docker-push IMG=<some-registry>/connections-api:tag
+❯ kubectl config use-context kind-webhook-testing
+Switched to context "kind-webhook-testing".
+
+❯ kubectl version 
+Client Version: v1.32.3
+Kustomize Version: v5.5.0
+Server Version: v1.32.2
 ```
 
-**NOTE:** This image ought to be published in the personal registry you specified.
-And it is required to have access to pull the image from the working environment.
-Make sure you have the proper permission to the registry if the above commands don’t work.
+`make build` will build locally, but `make docker-build load-kind` will create a local container image with
+`podman`, save it as `image.tar` in the current directory, and then load it into kind.
 
-**Install the CRDs into the cluster:**
+Run `make deploy` to load the resources into the cluster.
 
-```sh
-make install
+In another terminal:
+```fish
+❯ kubectl create deployment my-dep --image=busybox -- date
+deployment.apps/my-dep created
 ```
 
-**Deploy the Manager to the cluster with the image specified by `IMG`:**
-
-```sh
-make deploy IMG=<some-registry>/connections-api:tag
-```
-
-> **NOTE**: If you encounter RBAC errors, you may need to grant yourself cluster-admin
-privileges or be logged in as admin.
-
-**Create instances of your solution**
-You can apply the samples (examples) from the config/sample:
-
-```sh
-kubectl apply -k config/samples/
-```
-
->**NOTE**: Ensure that the samples has default values to test it out.
-
-### To Uninstall
-**Delete the instances (CRs) from the cluster:**
-
-```sh
-kubectl delete -k config/samples/
-```
-
-**Delete the APIs(CRDs) from the cluster:**
-
-```sh
-make uninstall
-```
-
-**UnDeploy the controller from the cluster:**
-
-```sh
-make undeploy
-```
-
-## Project Distribution
-
-Following are the steps to build the installer and distribute this project to users.
-
-1. Build the installer for the image built and published in the registry:
-
-```sh
-make build-installer IMG=<some-registry>/connections-api:tag
-```
-
-NOTE: The makefile target mentioned above generates an 'install.yaml'
-file in the dist directory. This file contains all the resources built
-with Kustomize, which are necessary to install this project without
-its dependencies.
-
-2. Using the installer
-
-Users can just run kubectl apply -f <URL for YAML BUNDLE> to install the project, i.e.:
-
-```sh
-kubectl apply -f https://raw.githubusercontent.com/<org>/connections-api/<tag or branch>/dist/install.yaml
-```
-
-## Contributing
-// TODO(user): Add detailed information on how you would like others to contribute to this project
-
-**NOTE:** Run `make help` for more information on all potential `make` targets
-
-More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
-
-## License
-
-Copyright 2025.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
+Back in the original terminal:
+```fish
+❯ kubectl logs -f -n connections-api-system connections-api-controller-manager-d464b758b-6jqws
+2025-06-30T01:10:38Z	INFO	controller-runtime.webhook	Registering webhook	{"path": "/bind-connections-to-workloads"}
+2025-06-30T01:10:38Z	INFO	setup	starting manager
+2025-06-30T01:10:38Z	INFO	starting server	{"name": "health probe", "addr": "[::]:8081"}
+2025-06-30T01:10:38Z	INFO	controller-runtime.webhook	Starting webhook server
+2025-06-30T01:10:38Z	INFO	setup	disabling http/2
+2025-06-30T01:10:38Z	INFO	controller-runtime.certwatcher	Updated current TLS certificate
+2025-06-30T01:10:38Z	INFO	controller-runtime.webhook	Serving webhook server	{"host": "", "port": 9443}
+2025-06-30T01:10:38Z	INFO	controller-runtime.certwatcher	Starting certificate poll+watcher	{"interval": "10s"}
+2025-06-30T01:11:03Z	INFO	admission	Processing: apps/v1, Kind=Deployment	{"object": {"name":"my-dep","namespace":"default"}, "namespace": "default", "name": "my-dep", "resource": {"group":"apps","version":"v1","resource":"deployments"}, "user": "kubernetes-admin", "requestID": "9fbde638-6736-49b5-9f70-c2e7eca27488"}
+2025-06-30T01:11:03Z	INFO	admission	Handling request of type *v1.Deployment from kubernetes-admin	{"object": {"name":"my-dep","namespace":"default"}, "namespace": "default", "name": "my-dep", "resource": {"group":"apps","version":"v1","resource":"deployments"}, "user": "kubernetes-admin", "requestID": "9fbde638-6736-49b5-9f70-c2e7eca27488"}```
