@@ -125,3 +125,5 @@ require (
 )
 
 replace github.com/kserve/kserve => github.com/opendatahub-io/kserve v0.0.0-20250610213519-91cecf465626
+
+replace github.com/kubeflow/kubeflow => github.com/opendatahub-io/kubeflow v1.10.0-3
