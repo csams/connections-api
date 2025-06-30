@@ -38,10 +38,10 @@ import (
 	"github.com/csams/connections-api/internal/registry"
 	cxnhook "github.com/csams/connections-api/internal/webhook"
 
-	defaulters "github.com/csams/connections-api/internal/defaulters/api"
-	"github.com/csams/connections-api/internal/defaulters/deployment"
-	"github.com/csams/connections-api/internal/defaulters/inferenceservice"
-	"github.com/csams/connections-api/internal/defaulters/notebooks"
+	"github.com/csams/connections-api/internal/binders/deployment"
+	"github.com/csams/connections-api/internal/binders/inferenceservice"
+	"github.com/csams/connections-api/internal/binders/notebooks"
+	"github.com/csams/connections-api/internal/defaulter"
 )
 
 var (
@@ -113,10 +113,10 @@ func main() {
 
 	defaulterHooks := registry.New(scheme)
 
-	defaulterHooks.Add(defaulters.New(deployment.New()))
-	defaulterHooks.Add(defaulters.New(inferenceservice.New()))
-	defaulterHooks.Add(defaulters.New(notebooks.NewV1Binder()))
-	defaulterHooks.Add(defaulters.New(notebooks.NewV1Beta1Binder()))
+	defaulterHooks.Add(defaulter.New(deployment.New()))
+	defaulterHooks.Add(defaulter.New(inferenceservice.New()))
+	defaulterHooks.Add(defaulter.New(notebooks.NewV1Binder()))
+	defaulterHooks.Add(defaulter.New(notebooks.NewV1Beta1Binder()))
 
 	hook := cxnhook.NewDispatcher(scheme, defaulterHooks)
 	mgr.GetWebhookServer().Register("/bind-connections-to-workloads", hook)

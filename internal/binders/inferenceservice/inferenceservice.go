@@ -11,6 +11,7 @@ import (
 
 	// https://pkg.go.dev/github.com/kserve/kserve@v0.15.2/pkg/apis/serving/v1beta1
 	// for InferenceService
+	"github.com/csams/connections-api/internal/defaulter"
 	serving "github.com/kserve/kserve/pkg/apis/serving/v1beta1"
 	// This will be part of KServe, but I'm not sure this is defined anywhere in an accessible git repo yet
 	// LLMInferenceService
@@ -18,11 +19,15 @@ import (
 	// modelservice "github.com/llm-d/llm-d-model-service/api/v1alpha1"
 )
 
-var AddToScheme = serving.AddToScheme
+var (
+	_ defaulter.Mutator[*serving.InferenceService] = &InferenceServiceBinder{}
+
+	AddToScheme = serving.AddToScheme
+)
 
 type InferenceServiceBinder struct{}
 
-func (dep *InferenceServiceBinder) Bind(ctx context.Context, obj *serving.InferenceService) error {
+func (dep *InferenceServiceBinder) Mutate(ctx context.Context, obj *serving.InferenceService) error {
 	logger := log.FromContext(ctx)
 
 	gvk := obj.GetObjectKind().GroupVersionKind()

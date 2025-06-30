@@ -8,7 +8,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	"github.com/csams/connections-api/internal/defaulters/api"
+	"github.com/csams/connections-api/internal/defaulter"
 )
 
 type DefaulterHookRegistry struct {
@@ -17,7 +17,9 @@ type DefaulterHookRegistry struct {
 }
 
 // Add wraps the defaulter in an admission.Webhook and adds it to the registry
-func (d *DefaulterHookRegistry) Add(defaulter api.Defaulter) {
+// This associateѕ one admission.CustomDefaulter with each GVK, but we could use an
+// admission.MultiMutatingHandler for each GVK and then dispatch to multiple CustomerDefaulters
+func (d *DefaulterHookRegistry) Add(defaulter defaulter.Defaulter) {
 	obj := defaulter.Object()
 	if gvk, err := apiutil.GVKForObject(obj, d.Scheme); err == nil {
 		if _, found := d.registry[gvk]; found {

@@ -10,12 +10,16 @@ import (
 	// kubeflow has a PodDefaults CR, but it doesn't look like it's been updated in 3 years:
 	// https://github.com/kubeflow/kubeflow/blob/master/components/admission-webhook/README.md
 	// for notebooks
+	"github.com/csams/connections-api/internal/defaulter"
 	nbv1 "github.com/kubeflow/kubeflow/components/notebook-controller/api/v1"
 	nbv1beta1 "github.com/kubeflow/kubeflow/components/notebook-controller/api/v1beta1"
 	// TODO: add Notebooks v2
 )
 
 var (
+	_ defaulter.Mutator[*nbv1.Notebook]      = &NotebookV1Binder{}
+	_ defaulter.Mutator[*nbv1beta1.Notebook] = &NotebookV1Beta1Binder{}
+
 	localSchemeBuilder = runtime.SchemeBuilder{
 		nbv1.AddToScheme,
 		nbv1beta1.AddToScheme,
@@ -26,7 +30,7 @@ var (
 
 type NotebookV1Binder struct{}
 
-func (dep *NotebookV1Binder) Bind(ctx context.Context, obj *nbv1.Notebook) error {
+func (dep *NotebookV1Binder) Mutate(ctx context.Context, obj *nbv1.Notebook) error {
 	logger := log.FromContext(ctx)
 
 	gvk := obj.GetObjectKind().GroupVersionKind()
@@ -41,7 +45,7 @@ func NewV1Binder() *NotebookV1Binder {
 
 type NotebookV1Beta1Binder struct{}
 
-func (dep *NotebookV1Beta1Binder) Bind(ctx context.Context, obj *nbv1beta1.Notebook) error {
+func (dep *NotebookV1Beta1Binder) Mutate(ctx context.Context, obj *nbv1beta1.Notebook) error {
 	logger := log.FromContext(ctx)
 
 	gvk := obj.GetObjectKind().GroupVersionKind()

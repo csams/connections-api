@@ -58,9 +58,9 @@ func (dispatcher *Dispatcher) Handle(ctx context.Context, req admission.Request)
 
 	// get the object's gvk and dispatch to the right webhook
 	if gvk, err := apiutil.GVKForObject(pm, dispatcher.Scheme); err == nil {
-		if defaulter, ok := dispatcher.DefaulterHooks.Lookup(gvk); ok {
+		if hook, ok := dispatcher.DefaulterHooks.Lookup(gvk); ok {
 			logger.Info(fmt.Sprintf("Processing: %v", gvk))
-			return defaulter.Handle(ctx, req)
+			return hook.Handle(ctx, req)
 		} else {
 			logger.Info(fmt.Sprintf("Skipping: %v", gvk))
 		}
