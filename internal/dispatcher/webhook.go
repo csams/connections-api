@@ -3,12 +3,9 @@ package dispatcher
 import (
 	"context"
 	"fmt"
-	"net/http"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
@@ -17,7 +14,6 @@ import (
 
 type Dispatcher struct {
 	Scheme         *runtime.Scheme
-	Decoder        admission.Decoder
 	DefaulterHooks *registry.DefaulterHookRegistry
 }
 
@@ -27,7 +23,6 @@ func New(scheme *runtime.Scheme, hooks *registry.DefaulterHookRegistry) *admissi
 	return &admission.Webhook{
 		Handler: &Dispatcher{
 			Scheme:         scheme,
-			Decoder:        admission.NewDecoder(scheme),
 			DefaulterHooks: hooks,
 		},
 	}
@@ -47,25 +42,13 @@ func (dispatcher *Dispatcher) Handle(ctx context.Context, req admission.Request)
 
 	logger := log.FromContext(ctx)
 
-	// partially decode the object so we can get its GVK
-	pm := &metav1.PartialObjectMetadata{}
-	if err := dispatcher.Decoder.Decode(req, pm); err != nil {
-		logger.Error(err, "Error decoding request")
-		return admission.Errored(http.StatusBadRequest, err)
+	gvk := req.Kind
+	if hook, ok := dispatcher.DefaulterHooks.Lookup(gvk); ok {
+		logger.Info(fmt.Sprintf("Processing: %v", gvk))
+		return hook.Handle(ctx, req)
 	}
 
-	// get the object's gvk and dispatch to the right webhook
-	if gvk, err := apiutil.GVKForObject(pm, dispatcher.Scheme); err == nil {
-		if hook, ok := dispatcher.DefaulterHooks.Lookup(gvk); ok {
-			logger.Info(fmt.Sprintf("Processing: %v", gvk))
-			return hook.Handle(ctx, req)
-		} else {
-			logger.Info(fmt.Sprintf("Skipping: %v", gvk))
-		}
-	} else {
-		logger.Error(err, "Error getting gvk")
-		return admission.Errored(http.StatusBadRequest, err)
-	}
+	logger.Info(fmt.Sprintf("Skipping: %v", gvk))
 
 	return admission.Allowed("")
 }

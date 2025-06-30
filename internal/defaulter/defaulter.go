@@ -45,7 +45,6 @@ func New[T any](m Mutator[*T]) Defaulter {
 			Mutator: m,
 			obj:     obj,
 		}
-	} else {
-		panic(fmt.Errorf("type %T does not implement runtime.Object", t))
 	}
+	panic(fmt.Errorf("type %T does not implement runtime.Object", t))
 }

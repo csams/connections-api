@@ -16,7 +16,7 @@ import (
 	// This will be part of KServe, but I'm not sure this is defined anywhere in an accessible git repo yet
 	// LLMInferenceService
 	// requires go 1.24 - version chasing may be an issue
-	// modelservice "github.com/llm-d/llm-d-model-service/api/v1alpha1"
+	// ModelService "github.com/llm-d/llm-d-model-service/api/v1alpha1"
 )
 
 var (
