@@ -17,8 +17,8 @@ type Dispatcher struct {
 	DefaulterHooks *registry.DefaulterHookRegistry
 }
 
-// New creates an admission.Webhook that decodes each request to a PartialObjectMetadata and then
-// dispatches it to an admission.Webhook wrapping a type-specific admission.CustomDefaulter
+// New creates an admission.Webhook dispatches each request to an admission.Webhook wrapping a type-specific
+// admission.CustomDefaulter
 func New(scheme *runtime.Scheme, hooks *registry.DefaulterHookRegistry) *admission.Webhook {
 	return &admission.Webhook{
 		Handler: &Dispatcher{
@@ -29,8 +29,8 @@ func New(scheme *runtime.Scheme, hooks *registry.DefaulterHookRegistry) *admissi
 }
 
 func (dispatcher *Dispatcher) Handle(ctx context.Context, req admission.Request) admission.Response {
-	// the Object may not have a name on create
-	// how do we tell which connection should apply to it?
+	// Will workloads always have a name when they're created?
+	// If not, how do we tell which connections should apply to it?
 
 	// what do we have to work with that doesn't require modifying the object to give us a hint?
 	// - userinfo (maybe?) - name and maybe groups
@@ -39,6 +39,7 @@ func (dispatcher *Dispatcher) Handle(ctx context.Context, req admission.Request)
 	// if we need a hint on the object:
 	// the workload either must have a label with an alternate identity we can use to match against a binding object
 	// or it must have annotations that specify the connections that apply
+	// the dashboard currently requires annotations.
 
 	logger := log.FromContext(ctx)
 
